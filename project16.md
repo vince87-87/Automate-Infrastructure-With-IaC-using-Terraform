@@ -20,11 +20,33 @@ Open your Visual Studio Code and:
 
 Your setup should look like this.
 
+![image](https://user-images.githubusercontent.com/49937302/125180995-282a4380-e233-11eb-8229-ce08b4e409f6.png)
+
+
 # Provider and VPC resource section
 
 Add AWS as a provider, and a resource to create a VPC in the main.tf file.
 Provider block informs Terraform that we intend to build infrastructure within AWS.
 Resource block will create a VPC.
 
+	provider "aws" {
+			region = "ap-southeast-1"
+	}
+
+	resource "aws_vpc" "main" {
+		cidr_block                     = "172.16.0.0/16"
+		enable_dns_support             = "true"
+		enable_dns_hostnames           = "true"
+		enable_classiclink             = "false"
+		enable_classiclink_dns_support = "false"
+	}
+
 The next thing we need to do, is to download necessary plugins for Terraform to work. These plugins are used by providers and provisioners. At this stage, we only have provider in our main.tf file. So, Terraform will just download plugin for AWS provider.
 Lets accomplish this with terraform init command as seen in the below demonstration.
+
+navigate to PBL directory
+
+Run "terraform init"
+
+![image](https://user-images.githubusercontent.com/49937302/125181019-5f98f000-e233-11eb-9468-dd556fcec008.png)
+
