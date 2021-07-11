@@ -105,3 +105,110 @@ Fixing Hard Coded Values: We will introduce variables, and remove hard coding.
 
 Starting with the provider block, declare a variable named region, give it a default value, and update the provider section by referring to the declared variable.
 
+Terraform has a functionality that allows us to pull data which exposes information to us. For example, every region has Availability Zones (AZ). Different regions have from 2 to 4 Availability Zones. With over 20 geographic regions and over 70 AZs served by AWS, it is impossible to keep up with the latest information by hard coding the names of AZs. Hence, we will explore the use of Terraform’s Data Sources to fetch information outside of Terraform. In this case, from AWS
+
+Let us fetch Availability zones from AWS, and replace the hard coded value in the subnet’s availability_zone section.
+
+  # Get list of availability zones
+        data "aws_availability_zones" "available" {
+        state = "available"
+        }
+
+To make use of this new data resource, we will need to introduce a count argument in the subnet block: Something like this.
+
+    # Create public subnet1
+    resource "aws_subnet" "public" { 
+        count                   = 2
+        vpc_id                  = aws_vpc.main.id
+        cidr_block              = "172.16.1.0/24"
+        map_public_ip_on_launch = true
+        availability_zone       = data.aws_availability_zones.available.names[count.index]
+
+    }
+    
+ # Let’s make cidr_block dynamic
+ 
+ We will introduce a function cidrsubnet() to make this happen. It accepts 3 parameters. Let us use it first by updating the configuration, then we will explore its internals.
+
+    # Create public subnet1
+    resource "aws_subnet" "public" { 
+        count                   = 2
+        vpc_id                  = aws_vpc.main.id
+        cidr_block              = cidrsubnet(var.vpc_cidr, 4 , count.index)
+        map_public_ip_on_launch = true
+        availability_zone       = data.aws_availability_zones.available.names[count.index]
+
+    }
+A closer look at cidrsubnet - this function works like an algorithm to dynamically create a subnet CIDR per AZ. Regardless of the number of subnets created, it takes care of the cidr value per subnet.
+
+Its parameters are cidrsubnet(prefix, newbits, netnum)
+
+- The prefix parameter must be given in CIDR notation, same as for VPC.
+- The newbits parameter is the number of additional bits with which to extend the prefix. For example, if given a prefix ending with /16 and a newbits value of 8, the resulting subnet address will have length /24
+- The netnum parameter is a whole number that can be represented as a binary integer with no more than newbits binary digits, which will be used to populate the additional bits added to the prefix
+
+# The final problem to solve is removing hard coded count value
+
+Now we can simply update the public subnet block like this
+
+# Create public subnet
+    resource "aws_subnet" "public" { 
+        count                   = length(data.aws_availability_zones.available.names)
+        vpc_id                  = aws_vpc.main.id
+        cidr_block              = cidrsubnet(var.vpc_cidr, 8 , count.index)
+        map_public_ip_on_launch = true
+        availability_zone       = data.aws_availability_zones.available.names[count.index]
+
+    }
+
+It will return base on all the availabile zone for the region which is not the desire outcom
+
+Now, let us fix this.
+
+Declare a variable to store the desired number of public subnets, and set the default value
+
+	variable "preferred_number_of_public_subnets" {
+	  default = 2
+	}
+Next, update the count argument with a condition. Terraform needs to check first if there is a desired number of subnets. Otherwise, use the data returned by the length function. See how that is presented below.
+
+# Create public subnets
+	resource "aws_subnet" "public" {
+	  count  = var.preferred_number_of_public_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_public_subnets   
+	  vpc_id = aws_vpc.main.id
+	  cidr_block              = cidrsubnet(var.vpc_cidr, 8 , count.index)
+	  map_public_ip_on_launch = true
+	  availability_zone       = data.aws_availability_zones.available.names[count.index]
+
+	}
+
+Explanation: 
+The first part var.preferred_number_of_public_subnets == null checks if the value of the variable is set to null or has some value defined.
+
+The second part ? and length(data.aws_availability_zones.available.names) means, if the first part is true, then use this. In other words, if preferred number of public subnets is null (Or not known) then set the value to the data returned by lenght function.
+
+The third part : and var.preferred_number_of_public_subnets means, if the first condition is false, i.e preferred number of public subnets is not null then set the value to whatever is definied in var.preferred_number_of_public_subnets
+
+# Introducing variables.tf & terraform.tfvars
+
+Instead of havng a long list of variables in main.tf file, we can actually make our code a lot more readable and better structured by moving out some parts of the configuration content to other files.
+
+We will put all variable declarations in a separate file
+And provide non default values to each of them
+
+variables.tf -> contain all declared variables
+main.tf -> the main terraform code
+terraform.tfvars -> contain non default values of variables
+
+variables.tf
+![image](https://user-images.githubusercontent.com/49937302/125185388-283c3a80-e257-11eb-9cdc-f39299c71b2c.png)
+
+terraform.tfvars
+![image](https://user-images.githubusercontent.com/49937302/125185401-35592980-e257-11eb-82c2-fbd6dd2ca393.png)
+
+main.tf
+![image](https://user-images.githubusercontent.com/49937302/125185379-15c20100-e257-11eb-8467-b5326175887c.png)
+
+verify using terraform plan
+
+![image](https://user-images.githubusercontent.com/49937302/125185433-5e79ba00-e257-11eb-8c5b-c678de5334c1.png)
