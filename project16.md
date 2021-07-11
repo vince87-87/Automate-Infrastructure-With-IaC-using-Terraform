@@ -134,7 +134,7 @@ To make use of this new data resource, we will need to introduce a count argumen
     resource "aws_subnet" "public" { 
         count                   = 2
         vpc_id                  = aws_vpc.main.id
-        cidr_block              = cidrsubnet(var.vpc_cidr, 4 , count.index)
+        cidr_block              = cidrsubnet(var.vpc_cidr, 8 , count.index)
         map_public_ip_on_launch = true
         availability_zone       = data.aws_availability_zones.available.names[count.index]
 
