@@ -59,6 +59,8 @@ A new file is created terraform.tfstate This is how Terraform keeps itself up to
 
 If you also observed closely, you would realise that another file gets created during planning and apply. But this file gets deleted immediately. terraform.tfstate.lock.info This is what Terraform uses to track, who is running its code against the infrastructure at any point in time. This is very important for teams working on the same Terraform repository at the same time. The lock prevents a user from executing Terraform configuration against the same infrastructure when another user is doing the same - it allows to avoid duplicates and conflicts.
 
+![image](https://user-images.githubusercontent.com/49937302/125181311-27df7780-e236-11eb-93ea-a2cafa8138a1.png)
+
 # Subnets resource section
 
 According to our architectural design, we require 6 subnets:
@@ -86,3 +88,20 @@ Add below configuration to the main.tf file:
     map_public_ip_on_launch    = true
     availability_zone          = "ap-southeast-1b"
 }
+
+![image](https://user-images.githubusercontent.com/49937302/125181377-b94ee980-e236-11eb-913f-92b7a729c5b3.png)
+
+let us improve our code by refactoring it.
+
+First, destroy the current infrastructure. Since we are still in development, this is totally fine. Otherwise, DO NOT DESTROY an infrastructure that has been deployed to production.
+
+To destroy whatever has been created run terraform destroy command, and type yes after evaluating the plan.
+
+![image](https://user-images.githubusercontent.com/49937302/125181408-059a2980-e237-11eb-92fd-fc5050de4c7f.png)
+
+# Fixing The Problems By Code Refactoring
+
+Fixing Hard Coded Values: We will introduce variables, and remove hard coding.
+
+Starting with the provider block, declare a variable named region, give it a default value, and update the provider section by referring to the declared variable.
+
