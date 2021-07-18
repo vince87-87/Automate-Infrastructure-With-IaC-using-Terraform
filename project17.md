@@ -20,15 +20,15 @@ Tags all the resources you have created so far. Explore how to use format() and 
 
 # Internet Gateways & format() function
 
-  resource "aws_internet_gateway" "ig" {
-    vpc_id = aws_vpc.main.id
-    tags = merge(
-      local.default_tags,
-      {
-        Name = format("%s-%s!", aws_vpc.main.id,"IG")
-      } 
-    )
-  }
+    resource "aws_internet_gateway" "ig" {
+      vpc_id = aws_vpc.main.id
+      tags = merge(
+        local.default_tags,
+        {
+          Name = format("%s-%s!", aws_vpc.main.id,"IG")
+        } 
+      )
+    }
 
 *Explaination: Did you notice how we have used format() function to dynamically generate a unique name for this resource? The first part of the %s takes the interpolated value of aws_vpc.main.id while the second %s appends a literal string IG and finally an exclamation mark is added in the end.
 
@@ -69,10 +69,10 @@ resource "aws_eip" "nat_eip" {
 
 Create a file called route_tables.tf and use it to create routes for both public and private subnets, create the below resources.
 
-  #CUSTOM ROUTE TABLE FOR PUBLIC
-  resource "aws_route_table" "RTB-Public" {
-    count  = var.preferred_number_of_public_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_public_subnets  
-    vpc_id = aws_vpc.main.id
+    #CUSTOM ROUTE TABLE FOR PUBLIC
+    resource "aws_route_table" "RTB-Public" {
+      count  = var.preferred_number_of_public_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_public_subnets  
+      vpc_id = aws_vpc.main.id
 
     route {
       cidr_block = var.DEFAULT_route_destination
@@ -84,10 +84,10 @@ Create a file called route_tables.tf and use it to create routes for both public
     }
   }
 
-  #CUSTOM ROUTE TABLE FOR Web Private
-  resource "aws_route_table" "RTB-WEB-Private" {
-    count  = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
-    vpc_id = aws_vpc.main.id
+    #CUSTOM ROUTE TABLE FOR Web Private
+    resource "aws_route_table" "RTB-WEB-Private" {
+      count  = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
+      vpc_id = aws_vpc.main.id
 
     route {
       cidr_block = var.DEFAULT_route_destination
@@ -99,10 +99,11 @@ Create a file called route_tables.tf and use it to create routes for both public
     }
   }
 
-  #CUSTOM ROUTE TABLE FOR Data Private
-  resource "aws_route_table" "RTB-Data-Private" {
-    count  = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
-    vpc_id = aws_vpc.main.id
+    #CUSTOM ROUTE TABLE FOR Data Private
+
+    resource "aws_route_table" "RTB-Data-Private" {
+      count  = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
+      vpc_id = aws_vpc.main.id
 
     route {
       cidr_block = var.DEFAULT_route_destination
@@ -114,26 +115,26 @@ Create a file called route_tables.tf and use it to create routes for both public
     }
   }
 
-  #ROUTETABLE ASSOCIATION TO PUBLIC
-  resource "aws_route_table_association" "RTB-PUB-Association" {
-    count          = var.preferred_number_of_public_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_public_subnets
-    subnet_id      = aws_subnet.public.*.id[count.index]
-    route_table_id = aws_route_table.RTB-Public[count.index].id
-  }
+    #ROUTETABLE ASSOCIATION TO PUBLIC
+    resource "aws_route_table_association" "RTB-PUB-Association" {
+      count          = var.preferred_number_of_public_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_public_subnets
+      subnet_id      = aws_subnet.public.*.id[count.index]
+      route_table_id = aws_route_table.RTB-Public[count.index].id
+    }
 
-  #ROUTETABLE ASSOCIATION TO PRIVATE
-  resource "aws_route_table_association" "RTB-Private-WEB-Association" {
-    count          = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
-    subnet_id      = aws_subnet.WEB-Private.*.id[count.index]
-    route_table_id = aws_route_table.RTB-WEB-Private[count.index].id
-  }
+    #ROUTETABLE ASSOCIATION TO PRIVATE
+    resource "aws_route_table_association" "RTB-Private-WEB-Association" {
+      count          = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
+      subnet_id      = aws_subnet.WEB-Private.*.id[count.index]
+      route_table_id = aws_route_table.RTB-WEB-Private[count.index].id
+    }
 
-  #ROUTETABLE ASSOCIATION TO PRIVATE
-  resource "aws_route_table_association" "RTB-Private-Data-Association" {
-    count          = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
-    subnet_id      = aws_subnet.Data-Private.*.id[count.index]
-    route_table_id = aws_route_table.RTB-Data-Private[count.index].id
-  }
+    #ROUTETABLE ASSOCIATION TO PRIVATE
+    resource "aws_route_table_association" "RTB-Private-Data-Association" {
+      count          = var.preferred_number_of_private_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_private_subnets
+      subnet_id      = aws_subnet.Data-Private.*.id[count.index]
+      route_table_id = aws_route_table.RTB-Data-Private[count.index].id
+    }
 
 run terraform plan and apply
 
