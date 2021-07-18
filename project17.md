@@ -162,3 +162,63 @@ Note: You can add multiple tags as a default set
 terraform plan show that it the default tags are applied
 
 ![image](https://user-images.githubusercontent.com/49937302/126054338-8f48d1e7-164a-4616-a6ce-373efac7817a.png)
+
+# AWS Identity and Access Management
+# IaM and Roles
+
+Create AssumeRole
+
+Assume Role uses Security Token Service (STS) API that returns a set of temporary security credentials that you can use to access AWS resources that you might not normally have access to. These temporary credentials consist of an access key ID, a secret access key, and a security token. Typically, you use AssumeRole within your account or for cross-account access.
+
+Add the following code to a new file named security.tf
+
+     resource "aws_iam_role" "ec2_instance_role" {
+        name = "ec2_instance_role"
+        assume_role_policy = <<EOF
+        {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                "Action": "sts:AssumeRole",
+                "Principal": {
+                    "Service": "ec2.amazonaws.com"
+                },
+                "Effect": "Allow",
+                "Sid": ""
+                }
+            ]
+        }
+        EOF
+        tags = {
+            Name = "aws assume role"
+            Environment = var.environment
+            }
+        }
+
+Attach the Policy to the IAM Role
+This is where, we will be attaching the policy which we created above, to the role we created in the first step.
+
+    resource "aws_iam_role_policy_attachment" "test-attach" {
+        role       = aws_iam_role.ec2_instance_role.name
+        policy_arn = aws_iam_policy.policy.arn
+    }
+    
+Create an Instance Profile and interpolate the IAM Role
+
+    resource "aws_iam_instance_profile" "ip" {
+            name = "aws_instance_profile_test"
+            role =  aws_iam_role.ec2_instance_role.name
+        }
+# Compute and Security
+# Resources to be created inside public subnets
+
+Upload SSH keys to EC2 key pairs
+
+Create 2 Bastion EC2 Instances along with Security Groups
+
+Create an Application Load Balancer (ALB)
+
+Create an Auto Scaling Group (ASG)
+
+# Upload SSH key to EC2 key pairs
+
