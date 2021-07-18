@@ -140,3 +140,25 @@ run terraform plan and apply
 
 ![image](https://user-images.githubusercontent.com/49937302/126053782-470905dc-9655-42ea-849a-52049becae5b.png)
 
+A little bit more about Tagging
+Tagging is a straightforward, but a very powerful concept that helps you manage your resources much more efficiently:
+
+Resources are much better organized in ‘virtual’ groups
+
+They can be easily filtered and searched from console or programmatically
+
+Billing team can easily generate reports and determine how much each part of infrastructure costs how much (by department, by type, by environment, etc.)
+
+You can easily determine resources that are not being used and take actions accordingly
+
+If there are different teams in the organisation using the same account, tagging can help differentiate who owns which resources.
+
+Note: You can add multiple tags as a default set
+
+![image](https://user-images.githubusercontent.com/49937302/126054322-00c4cdd5-032a-4595-8b77-e999be022b63.png)
+
+![image](https://user-images.githubusercontent.com/49937302/126054330-fecd8946-0889-4676-a19f-4fb8ec65b291.png)
+
+terraform plan show that it the default tags are applied
+
+![image](https://user-images.githubusercontent.com/49937302/126054338-8f48d1e7-164a-4616-a6ce-373efac7817a.png)
