@@ -82,3 +82,9 @@ Now, head over to the S3 console again, refresh the page, and click the grey “
 
 ![image](https://user-images.githubusercontent.com/49937302/126871353-8b264a34-5842-470f-9fbb-08f6b35d3877.png)
 
+# Security Groups refactoring with dynamic block
+
+# EC2 refactoring with Map and Lookup
+
+
+
