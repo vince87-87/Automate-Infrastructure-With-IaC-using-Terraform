@@ -281,5 +281,13 @@ use lookup function to map to the region
       key_name                    = aws_key_pair.vincent.key_name
       ami                         = lookup(var.images,var.region,var.ami)
 
-# conditional expression
+# Terraform Modules and best practices to structure your .tf codes
+
+Modules serve as containers that allow to logically group Terraform codes for similar resources in the same domain (e.g., Compute, Networking, AMI, etc.). One root module can call other child modules and insert their configurations when applying Terraform config. This concept makes your code structure neater, and it allows different team members to work on different parts of configuration at the same time.
+
+You can also create and publish your modules to Terraform Registry for others to use and use someone’s modules in your projects.
+
+Module is just a collection of .tf and/or .tf.json files in a directory.
+
+# Refactor project using Modules
 
