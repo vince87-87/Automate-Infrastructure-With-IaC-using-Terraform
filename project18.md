@@ -84,7 +84,202 @@ Now, head over to the S3 console again, refresh the page, and click the grey “
 
 # Security Groups refactoring with dynamic block
 
+    resource "aws_security_group" "bastion_sg" {
+      name        = "vpc_web_sg"
+      description = "Allow incoming ssh & HTTP connections."
+      vpc_id      = aws_vpc.main.id
+
+      dynamic "ingress" {
+        for_each = var.bastion_ingress_port
+        iterator = port # set a name variables else defaults to ingress
+        content {
+          from_port   = port.value
+          to_port     = port.value
+          protocol    = var.tcp_protocol
+          cidr_blocks = var.allow_ipv4_anywhere
+        }
+
+      }
+
+      egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = var.tcp_protocol
+        cidr_blocks = var.allow_ipv4_anywhere
+      }
+
+      tags = {
+        Name        = "Bastion-SG"
+        Environment = var.environment
+      }
+    }
+
+    resource "aws_security_group" "my-alb-sg" {
+      name   = "my-alb-sg"
+      description = "SG-MyALB"
+      vpc_id = aws_vpc.main.id
+
+      dynamic "ingress" {
+        for_each = var.alb_ingress_port
+        iterator = port
+        content {
+          from_port = port.value
+          to_port = port.value
+          protocol = var.tcp_protocol
+          cidr_blocks = var.allow_ipv4_anywhere
+        }
+      }
+
+      egress {
+        from_port   = 0
+        to_port     = 0
+        protocol    = var.allow_all_traffic
+        cidr_blocks = var.allow_ipv4_anywhere
+      }
+    }
+
+    resource "aws_security_group" "my-asg-sg" {
+      name   = "my-asg-sg"
+      vpc_id = aws_vpc.main.id
+
+      dynamic "ingress" {
+        for_each = var.asg_ingress_port
+        iterator = port
+        content {
+          from_port = port.value
+          to_port = port.value
+          protocol = var.tcp_protocol
+          cidr_blocks = var.allow_ipv4_anywhere
+        }
+      }
+
+      egress {
+        from_port = 0
+        to_port = 0
+        protocol = var.allow_all_traffic
+        cidr_blocks = var.allow_ipv4_anywhere
+      }
+    }
+
+    resource "aws_security_group" "private_sg" {
+        name = "vpc_private"
+        description = "Allow incoming HTTP connections."
+        vpc_id = aws_vpc.main.id
+
+        dynamic "ingress" {
+          for_each = var.private_ingress_port
+          iterator = port
+          content {
+            from_port   = port.value
+            to_port     = port.value
+            protocol    = var.tcp_protocol
+            cidr_blocks = var.allow_ipv4_anywhere
+          }
+        }
+
+        egress {
+          from_port   = 0
+          to_port     = 0
+          protocol    = var.allow_all_traffic
+          cidr_blocks = var.allow_ipv4_anywhere
+        }
+
+        tags = {
+            Name = "private-sg"
+        }
+
+
+    }
+
+    resource "aws_security_group" "SG" {
+      vpc_id      = aws_vpc.main.id
+      name        = "SG"
+      description = "Allow Inbound Traffic"
+
+      dynamic "ingress" {
+        for_each = var.sg_ingress_port
+        iterator = port
+        content{
+          from_port   = port.value
+          to_port     = port.value
+          protocol    = var.tcp_protocol
+          cidr_blocks = [var.vpc_cidr]
+        }
+      }
+
+        ingress {
+        from_port   = 80
+        to_port     = 80
+        protocol    = "tcp"
+        cidr_blocks = ["0.0.0.0/0"]
+      }
+
+      egress {
+        from_port = 0
+        to_port   = 0
+        protocol  = "-1"
+        cidr_blocks = [var.vpc_cidr]
+      }
+
+      dynamic "egress" {
+        for_each = var.sg_egress_port
+        iterator = port
+        content {
+          from_port = port.value
+          to_port = port.value
+          protocol = var.tcp_protocol
+          cidr_blocks = var.allow_ipv4_anywhere
+        }
+      }
+
+      tags =  {
+        Name = "efs-SG"
+      }
+
+    }
+
+    resource "aws_security_group" "myapp_mysql_rds" {
+      name        = "secuirty_group_web_mysqlserver"
+      description = "Allow access to MySQL RDS"
+      vpc_id      = aws_vpc.main.id
+
+      dynamic "ingress" {
+        for_each = var.rds_ingress_port
+        iterator = port
+        content {
+          from_port = port.value
+          to_port = port.value
+          protocol = var.tcp_protocol
+          cidr_blocks = [var.vpc_cidr]
+        }
+      }
+
+      tags = {
+        Name = "rds_security_group"
+      }
+
+    }
+
+
+
 # EC2 refactoring with Map and Lookup
 
+mapping ami to respective region to make it dynamic
 
+    variable "images" {
+        type = "map"
+        default = {
+            ap-southeast-1 = "ami-0d058fe428540cd89"
+            ap-southeast-2 = "ami-0567f647e75c7bc05"
+        }
+    }
+
+use lookup function to map to the region
+
+    resource "aws_instance" "bastion" {
+      count                       = var.preferred_number_of_public_subnets == null ? length(data.aws_availability_zones.available.names) : var.preferred_number_of_public_subnets
+      key_name                    = aws_key_pair.vincent.key_name
+      ami                         = lookup(var.images,var.region,var.ami)
+
+# conditional expression
 
