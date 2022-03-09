@@ -185,7 +185,7 @@ Next, update the count argument with a condition. Terraform needs to check first
 Explanation: 
 The first part var.preferred_number_of_public_subnets == null checks if the value of the variable is set to null or has some value defined.
 
-The second part ? and length(data.aws_availability_zones.available.names) means, if the first part is true, then use this. In other words, if preferred number of public subnets is null (Or not known) then set the value to the data returned by lenght function.
+The second part ? and length(data.aws_availability_zones.available.names) means, if the first part is true, then use this. In other words, if preferred number of public subnets is null (Or not known) then set the value to the data returned by length function.
 
 The third part : and var.preferred_number_of_public_subnets means, if the first condition is false, i.e preferred number of public subnets is not null then set the value to whatever is definied in var.preferred_number_of_public_subnets
 
